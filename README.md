@@ -1,15 +1,45 @@
-# dsh_worktrees
+# dsh-worktrees
 
-DSH 插件开发仓库。
+一个可被 dsh 安装和卸载的插件：在 dsh UI 界面里管理自己项目的不同功能开发。
 
-## 说明
+用 git worktree 把不同功能开发隔离到独立工作树，在 dsh 界面里可视化地创建、查看、切换、清理，不用记 git 命令。
 
-- 每个插件一个分支，直接在仓库里开发、提交、推送。
-- MIT License。
+## 功能
+
+（开发中）
+
+- worktree 列表：路径、分支、HEAD、脏状态
+- 创建 worktree：新分支 / 指定起点 / detached
+- 删除 worktree：脏状态确认
+- 状态查看：未提交改动、未跟踪文件
+
+## 安装
+
+```sh
+dsh plugin --profile <profile> add /path/to/dsh-worktrees
+# 或发布后
+dsh plugin --profile <profile> add dsh-worktrees
+```
+
+卸载：
+
+```sh
+dsh plugin --profile <profile> remove dsh-worktrees
+```
+
+安装/卸载后重启 profile 生效。
+
+## 开发
+
+```sh
+npm install --include=dev   # 本机 npm 配置了 omit=dev，需显式包含
+npm run typecheck
+npm run build
+```
 
 ## 文档
 
-插件开发知识库在 [`docs/`](docs/README.md)：一份[总介绍文档](docs/README.md) + 11 篇独立文档，每篇可单独阅读和改写。
+插件开发知识库在 [`docs/`](docs/README.md)：一份总介绍 + 11 篇独立文档，每篇可单独阅读和改写。
 
 | # | 文档 | 内容 |
 |---|---|---|
@@ -24,5 +54,12 @@ DSH 插件开发仓库。
 | 09 | [踩坑清单](docs/09-踩坑清单.md) | 高频错误与修复 |
 | 10 | [验证与发布](docs/10-验证与发布.md) | 验证金字塔、发布 checklist |
 | 11 | [参考资料](docs/11-参考资料.md) | 全部来源链接 |
+
+## 技能
+
+`.agents/skills/` 下有两个技能：
+
+- `develop-plugin` — 插件开发全流程（需求确认 → 骨架 → 实现 → 构建 → 验证 → 安装发布）
+- `update-docs` — 更新 docs/ 知识库
 
 > 注意：DSH 处于开发者预览期，API 仍在演进。文档以 2026-08 前后的公开资料为准，动手前先核对目标版本的官方文档与 npm 产物。
