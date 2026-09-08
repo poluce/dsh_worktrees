@@ -15,11 +15,34 @@ description: 开发、扩展或修复 DeepSeek Harness (DSH) 插件。当用户�
 
 ## 开发流程
 
-### 0. 先读文档
+### 0. 需求确认：先明确用户要开发的是什么插件
+
+**动手前必须先和用户确认插件类型，不要默认做工具插件。** 用户说"开发一个 XX 插件"时，先问清楚：
+
+**给谁用**（最关键）：
+
+- **给模型用** → 工具插件（`ctx.tools.register(defineTool(...))`），模型在会话里调用。
+- **给用户用** → UI 功能插件（client 面，浏览器面板/按钮）或命令插件（`ctx.commands`，用户直接输入）。
+- **两者都要** → 双面插件（工具 + UI）。
+
+**确认清单**（逐项和用户对齐后再动手）：
+
+| 问题 | 说明 |
+|---|---|
+| 给谁用？模型还是用户？ | 决定工具 / UI / 命令形态，这是第一个要问的 |
+| 功能范围？ | 列出具体操作，不要自己拍脑袋定 |
+| 面板放哪？（UI 插件） | `shell.overlay` 全局浮层 / 会话侧边栏 / header 按钮等 |
+| 操作哪个对象？ | 当前会话工作区，还是用户选择 |
+| 安装方式？ | 本地路径 / npm 发布 / GitHub |
+| 放哪？ | 仓库 `plugins/` 目录，直接 main 开发（本仓库无"每插件一分支"约定） |
+
+确认完把结论复述给用户（"你要的是 X 形态，功能是 A/B/C"），用户确认后再进入下一步。不要跳过确认直接写代码。
+
+### 1. 先读文档
 
 按需读 `docs/` 对应章节（见文末文档指引），确认：插件形态、目标 API 契约、目标版本。DSH 处于开发者预览期，API 会演进，动手前核对目标版本的官方文档与 npm 产物。
 
-### 1. 形态判断
+### 2. 形态判断
 
 | 需求 | 形态 |
 |---|---|
@@ -28,7 +51,7 @@ description: 开发、扩展或修复 DeepSeek Harness (DSH) 插件。当用户�
 | host 能力 + Web 可视化 | host + client 双面 |
 | 没有 Web 需求 | 只做 host，不声明 `dsh.client`，不构建 client bundle |
 
-### 2. 项目骨架
+### 3. 项目骨架
 
 ```
 dsh-my-plugin/
@@ -53,7 +76,7 @@ hello-plugin/
 └── index.js           # 插件模块
 ```
 
-### 3. host 实现
+### 4. host 实现
 
 **函数插件四要素**（无 default export）：
 
@@ -100,7 +123,7 @@ schema DSL 硬规则：`required` 属性内联（无数组、无 `required: fals
 
 **持久化**：路径显式配置；读改写串行化（promise 链互斥）；JSON 用临时文件 + fsync + 原子发布；并发创建用 `link()`+`unlink()` no-clobber。
 
-### 4. client 实现（双面插件）
+### 5. client 实现（双面插件）
 
 - 双 tsc program：host 排除 `src/client`；client 含 `src/client` + 共享事件类型文件（**零 import**）。
 - 含 JSX 的文件必须 `.tsx`；tsc 需要 5.7+（`rewriteRelativeImportExtensions`）。
@@ -109,7 +132,7 @@ schema DSL 硬规则：`required` 属性内联（无数组、无 `required: fals
 - 对话流内嵌 UI = Conversation Node：`match`/`start`/`update`/`buildViewNode` + `conversation.chat.node` keyed renderer；重放同一事件序列必须得到同一节点。
 - 设置卡片双半侧：Host 半侧 `ctx.settings.installSection(ctx, NS, Config, config, ...)` + 浏览器半侧 `settings.plugin.item` keyed slot，命名空间是配对键。
 
-### 5. 构建
+### 6. 构建
 
 ```sh
 pnpm build   # tsc host → tsc client → tsdown（client.js）
@@ -117,13 +140,13 @@ pnpm build   # tsc host → tsc client → tsdown（client.js）
 
 产物检查：`lib/index.js` 存在；`grep -rE "from './[^']+\.ts'" lib/` 无 `.ts` 残留。
 
-### 6. 验证（从快到慢）
+### 7. 验证（从快到慢）
 
 1. `pnpm typecheck`（双 program）→ 2. `pnpm build` → 3. 纯逻辑 verify 脚本 → 4. `dsh --profile <scratch> --dump-config`（组合树含插件行）→ 5. headless 真实任务 → 6. 独立 web 实例 + curl 探名册/路由 → 7. 真实浏览器 GUI 端到端。
 
 验证全程用独立 profile/独立端口，不触碰正在运行的实例。
 
-### 7. 安装与发布
+### 8. 安装与发布
 
 ```sh
 dsh plugin --profile <profile> add <包名或本地路径>   # 安装后重启 profile
